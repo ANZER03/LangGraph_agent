@@ -1,0 +1,10 @@
+{# Render user then assistant, used with hx-swap="beforeend" on #chat #}
+{% set role = 'user' %}
+{% set content = user_content %}
+{% include 'partials/message.html' %}
+
+{% set role = 'assistant' %}
+{% set content = assistant_content %}
+{% include 'partials/message.html' %}
+
+

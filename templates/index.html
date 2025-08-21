@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Chat</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.12" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="min-h-screen text-slate-100 antialiased">
+    <!-- Animated gradient background -->
+    <div class="bg-animated">
+      <div class="blob"></div>
+      <div class="blob"></div>
+      <div class="blob"></div>
+    </div>
+
+    <div class="min-h-screen flex flex-col">
+      <header class="/border-b/ bg-transparent">
+        <div class="max-w-3xl mx-auto px-4 py-5 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-xl bg-white/10 backdrop-blur-md ring-1 ring-white/20 grid place-items-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-fuchsia-300">
+                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/>
+              </svg>
+            </div>
+            <h1 class="text-xl font-semibold title-gradient">Agent Chat</h1>
+          </div>
+          <form hx-post="/reset" hx-swap="none" _="on htmx:afterOnLoad reload()">
+            <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 ring-1 ring-white/20 transition">
+              Reset
+            </button>
+          </form>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div class="rounded-3xl bg-white/5 backdrop-blur-xl ring-1 ring-white/10 shadow-2xl shadow-black/30">
+            <div id="chat" class="space-y-3 p-3 sm:p-6">
+              {% for m in messages %}
+                {% include 'partials/message.html' with context %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="mt-auto">
+        <div class="max-w-3xl mx-auto px-3 sm:px-4 pb-5 sm:pb-8">
+          <form
+            id="send-form"
+            class="relative flex items-end gap-2 sm:gap-3"
+            hx-post="/send"
+            hx-target="#chat"
+            hx-swap="beforeend"
+            _="on submit set #message.value to ''"
+          >
+            <input type="hidden" name="thread_id" value="{{ thread_id }}" />
+            <div class="flex-1 flex items-center gap-2 rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl shadow-black/20">
+              <input
+                id="message"
+                name="message"
+                type="text"
+                placeholder="Ask anything…"
+                class="flex-1 bg-transparent placeholder:text-slate-300/70 text-slate-50 focus-glow"
+                autocomplete="off"
+                required
+              />
+              <button
+                type="submit"
+                class="shrink-0 inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-rose-500 text-white hover:opacity-95 active:opacity-90 shadow-lg shadow-fuchsia-500/30"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+                <span class="hidden sm:inline">Send</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Keep the latest message in view when new content appends
+      document.body.addEventListener('htmx:afterSwap', function (ev) {
+        if (ev.target && ev.target.id === 'chat') {
+          ev.target.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      });
+
+      // Global delegated initializer for silent SSE blocks
+      const startSilentStream = (root) => {
+        const el = root.querySelector('[data-silent-sse]');
+        if (!el) return;
+        const rid = el.getAttribute('data-run-id');
+        const threadId = el.getAttribute('data-thread-id');
+        const q = el.getAttribute('data-q');
+        const statusEl = document.getElementById('status-' + rid);
+        if (!statusEl) return;
+        const listEl = statusEl.querySelector('[data-status-list]');
+        const headerEl = statusEl.querySelector('[data-status-header]');
+
+        function appendStatus(line){
+          if (!listEl) return;
+          const row = document.createElement('div');
+          row.className = 'flex justify-start';
+          const bubble = document.createElement('div');
+          bubble.className = 'max-w-[80%] status-bubble whitespace-pre-wrap text-xs';
+          bubble.textContent = line;
+          row.appendChild(bubble);
+          listEl.appendChild(row);
+          row.scrollIntoView({ block: 'nearest' });
+        }
+
+        const url = `/stream?rid=${encodeURIComponent(rid)}&thread_id=${encodeURIComponent(threadId)}&q=${encodeURIComponent(q)}`;
+        const es = new EventSource(url);
+        es.addEventListener('status', function(ev){
+          appendStatus(ev.data || 'Processing…');
+        });
+        es.addEventListener('final', function(ev){
+          if (headerEl) {
+            headerEl.innerHTML = `
+              <svg class="h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Completed</span>
+            `;
+          }
+          statusEl.insertAdjacentHTML('afterend', ev.data);
+          const panel = document.getElementById('task-form-panel');
+          if (panel) panel.remove();
+          es.close();
+        });
+        es.addEventListener('error', function(){ appendStatus('Connection lost'); });
+      };
+
+      // Start any silent streams appended to #chat
+      document.body.addEventListener('htmx:afterOnLoad', function (ev) {
+        if (ev.detail && ev.detail.elt && ev.detail.elt.id === 'chat') {
+          startSilentStream(ev.detail.elt);
+        }
+      });
+      // Also attempt on general swaps (covers nested partials)
+      document.body.addEventListener('htmx:afterSwap', function (ev) {
+        if (ev.target && ev.target.id === 'chat') {
+          startSilentStream(ev.target);
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+

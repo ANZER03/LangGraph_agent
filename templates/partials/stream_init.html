@@ -1,0 +1,76 @@
+{# Renders user bubble, a live status row, and starts SSE to stream final response #}
+{% set role = 'user' %}
+{% set content = user_content %}
+{% include 'partials/message.html' %}
+
+<div id="status-{{ run_id }}" class="space-y-2">
+  <div class="flex items-center gap-2 text-xs text-slate-300" data-status-header>
+    <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    <span>Working…</span>
+  </div>
+  <div data-status-list class="space-y-1"></div>
+</div>
+
+<script>
+(function(){
+  const rid = {{ run_id|tojson }};
+  const threadId = {{ thread_id|tojson }};
+  const q = {{ user_content|tojson }};
+  const statusEl = document.getElementById('status-' + rid);
+  if (!statusEl) return;
+  const listEl = statusEl.querySelector('[data-status-list]');
+  const headerEl = statusEl.querySelector('[data-status-header]');
+
+  function appendStatus(line){
+    if (!listEl) return;
+    const row = document.createElement('div');
+    row.className = 'flex justify-start';
+    const bubble = document.createElement('div');
+    bubble.className = 'max-w-[80%] status-bubble whitespace-pre-wrap text-xs';
+    bubble.textContent = line;
+    row.appendChild(bubble);
+    listEl.appendChild(row);
+    // Auto-scroll the page slightly to keep latest status visible
+    row.scrollIntoView({ block: 'nearest' });
+  }
+
+  const url = `/stream?rid=${encodeURIComponent(rid)}&thread_id=${encodeURIComponent(threadId)}&q=${encodeURIComponent(q)}`;
+  const es = new EventSource(url);
+
+  es.addEventListener('status', function(ev){
+    const line = ev.data || 'Processing…';
+    appendStatus(line);
+  });
+
+  // UI events can inject interactive UI like forms
+  es.addEventListener('ui', function(ev){
+    const html = ev.data;
+    if (html) {
+      statusEl.insertAdjacentHTML('afterend', html);
+    }
+  });
+
+  es.addEventListener('final', function(ev){
+    // Mark header as completed and append final assistant bubble after statuses
+    if (headerEl) {
+      headerEl.innerHTML = `
+        <svg class="h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Completed</span>
+      `;
+    }
+    statusEl.insertAdjacentHTML('afterend', ev.data);
+    es.close();
+  });
+
+  es.addEventListener('error', function(){
+    appendStatus('Connection lost');
+  });
+})();
+</script>
+
+

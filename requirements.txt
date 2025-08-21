@@ -1,0 +1,12 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+jinja2==3.1.4
+langchain==0.2.14
+langgraph==0.2.18
+openai==1.51.2
+pydantic==2.8.2
+numpy==1.26.4
+scipy==1.13.1
+python-dotenv==1.0.1
+python-multipart==0.0.9
+

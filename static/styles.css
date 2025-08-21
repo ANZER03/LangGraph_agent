@@ -1,0 +1,117 @@
+/*
+  Modern chat UI theme: animated blurred gradient background + glass panels
+  - Animation is disabled for users who prefer reduced motion
+*/
+
+:root {
+  --bg-dark: 14 20 34; /* rgb tuple for dark base */
+}
+
+/* Fullscreen animated gradient blobs background */
+.bg-animated {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: rgb(var(--bg-dark));
+}
+
+.bg-animated .blob {
+  position: absolute;
+  width: 42vmax;
+  height: 42vmax;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.45;
+  will-change: transform;
+  animation: floaty 28s ease-in-out infinite alternate;
+}
+
+.bg-animated .blob:nth-child(1) {
+  left: -10vmax;
+  top: -8vmax;
+  background: radial-gradient(closest-side, #7c3aed 30%, transparent 70%);
+  animation-duration: 30s;
+}
+
+.bg-animated .blob:nth-child(2) {
+  right: -12vmax;
+  top: 10vmax;
+  background: radial-gradient(closest-side, #db2777 25%, transparent 70%);
+  animation-duration: 26s;
+}
+
+.bg-animated .blob:nth-child(3) {
+  left: 20vmax;
+  bottom: -12vmax;
+  background: radial-gradient(closest-side, #06b6d4 25%, transparent 70%);
+  animation-duration: 34s;
+}
+
+@keyframes floaty {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-4vmax, 2vmax, 0) scale(1.08); }
+  100% { transform: translate3d(6vmax, -3vmax, 0) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-animated .blob { animation: none; }
+}
+
+/* Small entrance animation for new messages */
+.message-in {
+  animation: fadeInUp 280ms cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Utility: gradient text for titles */
+.title-gradient {
+  background-image: linear-gradient(90deg, #a78bfa, #f0abfc 45%, #fda4af 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtle glowing ring for focus states */
+.focus-glow:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.45), 0 0 0 6px rgba(99, 102, 241, 0.2);
+}
+
+/* Status bubble style used during streaming */
+.status-bubble {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  border-radius: 1.25rem;
+  padding: 0.375rem 0.625rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+/* Utility inputs/buttons for task form */
+.input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+.btn-primary {
+  background: linear-gradient(90deg, #6366f1, #d946ef, #f43f5e);
+  color: white;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+.btn {
+  background: rgba(255,255,255,0.08);
+  color: #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+

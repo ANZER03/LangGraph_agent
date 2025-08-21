@@ -1,0 +1,52 @@
+<div id="task-form-panel" class="mt-2">
+  <form
+    id="task-form"
+    class="flex flex-col gap-3 p-3 bg-white/5 ring-1 ring-white/10 rounded-2xl"
+    hx-post="/submit_task_form"
+    hx-target="#chat"
+    hx-swap="beforeend"
+    _="on submit add .opacity-50 to me then add [disabled] to <button/> in me"
+  >
+    <input type="hidden" name="thread_id" value="{{ thread_id }}" />
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1">
+        <span class="text-xs text-slate-300">Task ID</span>
+        <input name="task_id" required class="input" placeholder="unique-id" />
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="text-xs text-slate-300">Priority (1-5)</span>
+        <input name="priority" type="number" min="1" max="5" value="3" class="input" />
+      </label>
+      <label class="flex flex-col gap-1 sm:col-span-2">
+        <span class="text-xs text-slate-300">Description</span>
+        <input name="description" required class="input" placeholder="Describe the task" />
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="text-xs text-slate-300">Status</span>
+        <select name="status" class="input">
+          <option value="todo" selected>todo</option>
+          <option value="in_progress">in_progress</option>
+          <option value="done">done</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="text-xs text-slate-300">Due date (YYYY-MM-DD)</span>
+        <input name="due_date" type="date" class="input" />
+      </label>
+      <label class="flex flex-col gap-1 sm:col-span-2">
+        <span class="text-xs text-slate-300">Tags (comma separated)</span>
+        <input name="tags" class="input" placeholder="work, urgent" />
+      </label>
+      <label class="flex flex-col gap-1 sm:col-span-2">
+        <span class="text-xs text-slate-300">Notes</span>
+        <textarea name="notes" rows="3" class="input" placeholder="Optional notes"></textarea>
+      </label>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button type="submit" class="btn-primary">OK</button>
+      <button type="button" class="btn" _="on click remove #task-form-panel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+

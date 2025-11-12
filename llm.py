@@ -1,7 +1,7 @@
 from langchain.chat_models import init_chat_model
 import os
 
-llm = init_chat_model(model="gpt-4.1-nano-2025-04-14", model_provider="openai")
+llm = init_chat_model("google_genai:gemini-2.5-flash-lite" , api_key="AIzaSyDibK3sxWVNE3BN8zeKvuVLxXI1-ONkKiE")
 
 ASSISTANT_SYSTEM_PROMPT = (
     "You are TaskMate, a proactive task management assistant.\n"
